@@ -1273,11 +1273,11 @@ def test_dec_latency_parallel():
 
 
 if __name__ == '__main__':
-#    print("\n=== Testing Parallel Encryption Latency ===")
-#    test_enc_latency_parallel()
+   print("\n=== Testing Parallel Encryption Latency ===")
+   test_enc_latency_parallel()
    
-#    print("\n=== Testing Parallel Decryption Latency ===")
-#    test_dec_latency_parallel()
+   print("\n=== Testing Parallel Decryption Latency ===")
+   test_dec_latency_parallel()
    
    print("\n=== Testing Parallel Encryption Throughput ===")
    test_enc_throughput_parallel()
