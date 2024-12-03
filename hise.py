@@ -1172,71 +1172,59 @@ def batch_decrypt(args):
 
 
 
-
-def batch_process_messages(args):
-    messages, t, n = args
-    pp, keys, coms = Hise.setup(n, t)
-    return Hise.dist_gr_enc(messages, pp, keys, coms, t)
-
-def test_enc_throughput_parallel():
-    num_cpu = 4
-    rows = [[2]]
-    message_sizes = [2,4,6]
-    
-    for row in rows:
-        for t in row:
-            n = t
-            for m in message_sizes:
-                messages = [f"message{i}".encode() for i in range(m)]
-                batch_size = max(1, m // num_cpu)
-                message_batches = []
-                
-                for i in range(0, m, batch_size):
-                    batch = messages[i:min(i+batch_size, m)]
-                    message_batches.append((batch, t, n))
-                
-                start_time = time.time()
-                with Pool(processes=num_cpu) as pool:
-                    results = pool.map(batch_process_messages, message_batches)
-                duration = time.time() - start_time
-                
-                throughput = m / duration
-                print(f"Parallel encryption throughput for {t} nodes and {m} messages: {throughput:.2f} enc/sec")
-
-
-
-
-def batch_process_decryption(args):
-    messages, t, n = args
+def measure_batch_performance(n, t, m):
+    start_time = time.time()
+    messages = [f"message{i}".encode() for i in range(m)]
     pp, keys, coms = Hise.setup(n, t)
     batch = Hise.dist_gr_enc(messages, pp, keys, coms, t)
-    return Hise.dist_gr_dec(batch, pp, keys, coms, t, messages)
+    duration = time.time() - start_time
+    return duration
 
-def test_dec_throughput_parallel():
-    num_cpu = 4
+def test_enc_throughput_parallel():
+    num_cpu = 16
     rows = [[2]]
     message_sizes = [2,4,6]
     
-    for row in rows:
-        for t in row:
-            n = t
-            for m in message_sizes:
-                messages = [f"message{i}".encode() for i in range(m)]
-                batch_size = max(1, m // num_cpu)
-                batch_args = []
-                
-                for i in range(0, m, batch_size):
-                    batch_messages = messages[i:min(i+batch_size, m)]
-                    batch_args.append((batch_messages, t, n))
-                
-                start_time = time.time()
-                with Pool(processes=num_cpu) as pool:
-                    results = pool.map(batch_process_decryption, batch_args)
-                duration = time.time() - start_time
-                
-                throughput = m / duration
-                print(f"Parallel decryption throughput for {t} nodes and {m} messages: {throughput:.2f} dec/sec")
+    with Pool(processes=num_cpu) as pool:
+        for row in rows:
+            for t in row:
+                n = t
+                for m in message_sizes:
+                    args = [(n, t, m//num_cpu) for _ in range(num_cpu)]
+                    durations = pool.starmap(measure_batch_performance, args)
+                    total_duration = sum(durations)
+                    throughput = m / total_duration
+                    print(f"Parallel encryption throughput for {t} nodes and {m} messages: {throughput:.2f} enc/sec")
 
+
+
+
+
+def measure_dec_performance(n, t, m):
+    messages = [f"message{i}".encode() for i in range(m)]
+    pp, keys, coms = Hise.setup(n, t)
+    batch = Hise.dist_gr_enc(messages, pp, keys, coms, t)
+    
+    start_time = time.time()
+    Hise.dist_gr_dec(batch, pp, keys, coms, t, messages)
+    duration = time.time() - start_time
+    return duration
+
+def test_dec_throughput_parallel():
+    num_cpu = 16
+    rows = [[2]]
+    message_sizes = [2,4,6]
+    
+    with Pool(processes=num_cpu) as pool:
+        for row in rows:
+            for t in row:
+                n = t
+                for m in message_sizes:
+                    args = [(n, t, m//num_cpu) for _ in range(num_cpu)]
+                    durations = pool.starmap(measure_dec_performance, args)
+                    total_duration = sum(durations)
+                    throughput = m / total_duration
+                    print(f"Parallel decryption throughput for {t} nodes and {m} messages: {throughput:.2f} dec/sec")
 
 
 
