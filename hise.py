@@ -3,8 +3,6 @@
 # This code implements the HISE (Hierarchical Identity-Based Encryption) protocol
 # with Merkle tree verification and performance testing capabilities.
 
-from multiprocessing import Pool
-import numpy as np
 
 from typing import List, Tuple, Optional, Any, Dict
 from dataclasses import dataclass
@@ -351,25 +349,15 @@ class MerkleTree:
 ###########################################################################################################################################################################
 ###########################################################################################################################################################################
 
-# @dataclass
-# class HISEBatch:
-#     """Structure pour gérer un lot de messages HISE"""
-#     N: int                  # Nombre de feuilles dans l'arbre
-#     root: bytes            # Racine de l'arbre de Merkle
-#     cipher_tree: List[bytes] # Arbre des messages chiffrés
-#     omega: List[bytes]      # Vecteurs binaires encodés
-#     r_values: List[Scalar]  # Valeurs r_k pour le déchiffrement
-#     g2_r_values: List[Any]  # Valeurs g2^r_k précalculées
-
 @dataclass
 class HISEBatch:
-    __slots__ = ['N', 'root', 'cipher_tree', 'omega', 'r_values', 'g2_r_values']
-    N: int
-    root: bytes
-    cipher_tree: List[bytes]
-    omega: List[bytes]
-    r_values: List[Scalar]
-    g2_r_values: List[Any]
+    """Structure pour gérer un lot de messages HISE"""
+    N: int                  # Nombre de feuilles dans l'arbre
+    root: bytes            # Racine de l'arbre de Merkle
+    cipher_tree: List[bytes] # Arbre des messages chiffrés
+    omega: List[bytes]      # Vecteurs binaires encodés
+    r_values: List[Scalar]  # Valeurs r_k pour le déchiffrement
+    g2_r_values: List[Any]  # Valeurs g2^r_k précalculées
 
 @dataclass
 class HISEKeys:
@@ -889,12 +877,10 @@ def test_enc_latency():
     # rows = [[2,4,6,8]]  # Can be extended to [[2,4,6,8], [3,6,9,12], [4,8,12,16]]
     # message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000]
 
-
-    num_cpu = 4
-    # rows = [[2,4,6,8]]
-    rows = [[2]]
-    # message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500]
-    message_sizes = [2,4,6]  
+    rows = [[2,4,6,8]]
+    # rows = [[2]]
+    message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000]
+    # message_sizes = [2,4]    
 
     for row in rows:
         for t in row:
@@ -919,11 +905,10 @@ def test_enc_latency():
 
 def test_dec_latency():
     """Test decryption latency for different configurations"""
-    num_cpu = 4
-    # rows = [[2,4,6,8]]
-    rows = [[2]]
-    # message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500]
-    message_sizes = [2,4,6]
+    rows = [[2,4,6,8]]
+    # rows = [[2]]
+    message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000]
+    # message_sizes = [2,4]
 
     for row in rows:
         for t in row:
@@ -947,11 +932,11 @@ def test_dec_latency():
 
 def test_enc_throughput():
     """Test encryption throughput for different configurations"""
-    num_cpu = 4
-    # rows = [[2,4,6,8]]
-    rows = [[2]]
-    # message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500]
-    message_sizes = [2,4,6]
+    num_cpu = 16  # Adjust based on your system
+    rows = [[2,4,6,8]]
+    # rows = [[2]]
+    message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000]
+    # message_sizes = [2,4]
     
     for row in rows:
         for t in row:
@@ -975,11 +960,11 @@ def test_enc_throughput():
 
 def test_dec_throughput():
     """Test decryption throughput for different configurations"""
-    num_cpu = 4
-    # rows = [[2,4,6,8]]
-    rows = [[2]]
-    # message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500]
-    message_sizes = [2,4,6]
+    num_cpu = 16
+    rows = [[2,4,6,8]]
+    # rows = [[2]]
+    message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000]
+    # message_sizes = [2,4]
 
     for row in rows:
         for t in row:
@@ -1004,124 +989,6 @@ def test_dec_throughput():
 
 
 
-
-
-
-
-
-
-
-
-def test_enc_latency_optimized():
-
-    num_cpu = 4
-    # rows = [[2,4,6,8]]
-    rows = [[2]]
-    # message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500]
-    message_sizes = [2,4,6]
-
-    for row in rows:
-        for t in row:
-            n = t
-            pp, keys, coms = Hise.setup(n, t)
-            
-            for m in message_sizes:
-                messages = [f"message{i}".encode() for i in range(m)]
-                
-                start_time = time.time()
-                Hise.dist_gr_enc(messages, pp, keys, coms, t)
-                duration = time.time() - start_time
-                
-                print(f"Encryption latency for {t} nodes and {m} messages: {duration:.3f} seconds")
-
-def test_dec_latency_optimized():
-
-    num_cpu = 4
-    # rows = [[2,4,6,8]]
-    rows = [[2]]
-    # message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500]
-    message_sizes = [2,4,6]
-
-    for row in rows:
-        for t in row:
-            n = t
-            pp, keys, coms = Hise.setup(n, t) 
-            
-            for m in message_sizes:
-                messages = [f"message{i}".encode() for i in range(m)]
-                batch = Hise.dist_gr_enc(messages, pp, keys, coms, t)
-                
-                start_time = time.time()
-                Hise.dist_gr_dec(batch, pp, keys, coms, t, messages)
-                duration = time.time() - start_time
-                
-                print(f"Decryption latency for {t} nodes and {m} messages: {duration:.3f} seconds")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def test_enc_throughput_optimized():
-    num_cpu = 4
-    # rows = [[2,4,6,8]]
-    rows = [[2]]
-    # message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500]
-    message_sizes = [2,4,6]
-    
-    for row in rows:
-        for t in row:
-            n = t
-            
-            # Pré-calcul des paramètres cryptographiques
-            pp, keys, coms = Hise.setup(n, t)
-            
-            for m in message_sizes:
-                messages = [f"message{i}".encode() for i in range(m)]
-                
-                # Mesure du temps d'exécution
-                start_time = time.time()
-                # Simulation de parallélisation
-                for _ in range(num_cpu):
-                    Hise.dist_gr_enc(messages, pp, keys, coms, t)
-                duration = time.time() - start_time
-                
-                throughput = (num_cpu * m) / duration
-                print(f"Optimized HiSE throughput for {t} nodes and {m} messages: {throughput:.2f} enc/sec")
-
-def test_dec_throughput_optimized():
-    # Même structure que test_enc_throughput_optimized
-    num_cpu = 4
-    # rows = [[2,4,6,8]]
-    rows = [[2]]
-    # message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500]
-    message_sizes = [2,4,6]
-
-    for row in rows:
-        for t in row:
-            n = t
-            pp, keys, coms = Hise.setup(n, t)
-            
-            for m in message_sizes:
-                messages = [f"message{i}".encode() for i in range(m)]
-                batch = Hise.dist_gr_enc(messages, pp, keys, coms, t)
-                
-                start_time = time.time()
-                for _ in range(num_cpu):
-                    Hise.dist_gr_dec(batch, pp, keys, coms, t, messages)
-                duration = time.time() - start_time
-                
-                throughput = (num_cpu * m) / duration
-                print(f"Optimized HiSE decrypt throughput for {t} nodes and {m} messages: {throughput:.2f} dec/sec")
-
 ###########################################################################################################################################################################
 ###########################################################################################################################################################################
 ############################################################################## MAIN EXECUTION #############################################################################
@@ -1129,158 +996,17 @@ def test_dec_throughput_optimized():
 ###########################################################################################################################################################################
 
 
-# if __name__ == '__main__':
-#     # test_hise_full()
-
-#     print("\n=== Testing Encryption Latency ===")
-#     test_enc_latency()
-    
-#     print("\n=== Testing Decryption Latency ===")
-#     test_dec_latency()
-    
-#     # print("\n=== Testing Encryption Throughput ===")
-#     # test_enc_throughput()
-    
-#     # print("\n=== Testing Decryption Throughput ===")
-#     # test_dec_throughput()
-
-#     # print("\n=== Testing Parallel Encryption Throughput ===")
-#     # test_enc_throughput_optimized()
-    
-#     # print("\n=== Testing Parallel Decryption Throughput ===")
-#     # test_dec_throughput_optimized()
-
-#     print("\n=== Testing Parallel Encryption Latency ===")
-#     test_enc_latency_optimized()
-    
-#     print("\n=== Testing Parallel Decryption Latency ===")
-#     test_dec_latency_optimized()
-
-
-import time
-from multiprocessing import Pool
-import numpy as np
-
-def batch_encrypt(args):
-   messages, pp, keys, coms, t = args
-   return Hise.dist_gr_enc(messages, pp, keys, coms, t)
-
-def batch_decrypt(args):
-   batch, pp, keys, coms, t, messages = args 
-   return Hise.dist_gr_dec(batch, pp, keys, coms, t, messages)
-
-
-
-
-def measure_batch_performance(n, t, m):
-    start_time = time.time()
-    messages = [f"message{i}".encode() for i in range(m)]
-    pp, keys, coms = Hise.setup(n, t)
-    batch = Hise.dist_gr_enc(messages, pp, keys, coms, t)
-    duration = time.time() - start_time
-    return duration
-
-def test_enc_throughput_parallel():
-    num_cpu = 16
-    rows = [[2]]
-    message_sizes = [2,4,6]
-    
-    with Pool(processes=num_cpu) as pool:
-        for row in rows:
-            for t in row:
-                n = t
-                for m in message_sizes:
-                    args = [(n, t, m//num_cpu) for _ in range(num_cpu)]
-                    durations = pool.starmap(measure_batch_performance, args)
-                    total_duration = sum(durations)
-                    throughput = m / total_duration
-                    print(f"Parallel encryption throughput for {t} nodes and {m} messages: {throughput:.2f} enc/sec")
-
-
-
-
-
-def measure_dec_performance(n, t, m):
-    messages = [f"message{i}".encode() for i in range(m)]
-    pp, keys, coms = Hise.setup(n, t)
-    batch = Hise.dist_gr_enc(messages, pp, keys, coms, t)
-    
-    start_time = time.time()
-    Hise.dist_gr_dec(batch, pp, keys, coms, t, messages)
-    duration = time.time() - start_time
-    return duration
-
-def test_dec_throughput_parallel():
-    num_cpu = 16
-    rows = [[2]]
-    message_sizes = [2,4,6]
-    
-    with Pool(processes=num_cpu) as pool:
-        for row in rows:
-            for t in row:
-                n = t
-                for m in message_sizes:
-                    args = [(n, t, m//num_cpu) for _ in range(num_cpu)]
-                    durations = pool.starmap(measure_dec_performance, args)
-                    total_duration = sum(durations)
-                    throughput = m / total_duration
-                    print(f"Parallel decryption throughput for {t} nodes and {m} messages: {throughput:.2f} dec/sec")
-
-
-
-
-
-def test_enc_latency_parallel():
-#    rows = [[2,4,6,8]]
-#    message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500]
-
-    num_cpu = 4
-    rows = [[2]]
-    message_sizes = [2,4,6]
-
-    for row in rows:
-        for t in row:
-            n = t
-            pp, keys, coms = Hise.setup(n, t)
-            
-            for m in message_sizes:
-                messages = [f"message{i}".encode() for i in range(m)]
-                start_time = time.time()
-                batch = Hise.dist_gr_enc(messages, pp, keys, coms, t)
-                duration = time.time() - start_time
-                print(f"Encryption latency for {t} nodes and {m} messages: {duration:.3f} seconds")
-
-def test_dec_latency_parallel():
-#    rows = [[2,4,6,8]]
-#    message_sizes = [50, 150, 200, 250, 300, 350, 400, 450, 500]
-    num_cpu = 4
-    rows = [[2]]
-    message_sizes = [2,4,6]
-    
-    for row in rows:
-        for t in row:
-            n = t
-            pp, keys, coms = Hise.setup(n, t)
-            
-            for m in message_sizes:
-                messages = [f"message{i}".encode() for i in range(m)]
-                batch = Hise.dist_gr_enc(messages, pp, keys, coms, t)
-                
-                start_time = time.time()
-                decrypted = Hise.dist_gr_dec(batch, pp, keys, coms, t, messages)
-                duration = time.time() - start_time
-                print(f"Decryption latency for {t} nodes and {m} messages: {duration:.3f} seconds")
-
-
 if __name__ == '__main__':
-   print("\n=== Testing Parallel Encryption Latency ===")
-   test_enc_latency_parallel()
-   
-   print("\n=== Testing Parallel Decryption Latency ===")
-   test_dec_latency_parallel()
-   
-   print("\n=== Testing Parallel Encryption Throughput ===")
-   test_enc_throughput_parallel()
-   
-   print("\n=== Testing Parallel Decryption Throughput ===")
-   test_dec_throughput_parallel()
+    # test_hise_full()
+
+    print("\n=== Testing Encryption Latency ===")
+    test_enc_latency()
+    
+    print("\n=== Testing Decryption Latency ===")
+    test_dec_latency()
+    
+    print("\n=== Testing Encryption Throughput ===")
+    test_enc_throughput()
+    
+    print("\n=== Testing Decryption Throughput ===")
+    test_dec_throughput()
